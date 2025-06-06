@@ -36,7 +36,6 @@ pipeline {
                 }
             }
         }
-        
         stage('测试') {
             steps {
                 echo '运行测试...'
@@ -50,6 +49,7 @@ pipeline {
             }
             post {
                 always {
+                    // 发布测试结果
                     script {
                         if (fileExists('target/surefire-reports/TEST-*.xml')) {
                             junit 'target/surefire-reports/TEST-*.xml'
@@ -74,8 +74,8 @@ pipeline {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                }
+                    // 归档构建产物
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true                }
             }
         }
         
@@ -119,6 +119,7 @@ pipeline {
     post {
         always {
             echo '构建流程完成'
+            // 清理：停止可能仍在运行的应用
             script {
                 if (isUnix()) {
                     sh 'pkill -f "jenkins-test-1.0.0.jar" || true'
