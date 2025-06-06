@@ -32,10 +32,13 @@ pipeline {
                     mvn test
                     mvn package -DskipTests
                 '''
-            }
-            post {
+            }            post {
                 always {
-                    publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                    script {
+                        if (fileExists('target/surefire-reports/TEST-*.xml')) {
+                            junit 'target/surefire-reports/TEST-*.xml'
+                        }
+                    }
                 }
                 success {
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true

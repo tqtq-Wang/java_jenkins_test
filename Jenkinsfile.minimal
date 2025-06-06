@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('检出代码') {
+            steps {
+                echo '=== 检出代码 ==='
+                checkout scm
+                echo '代码检出完成'
+            }
+        }
+        
+        stage('构建') {
+            steps {
+                echo '=== 开始构建 ==='
+                script {
+                    if (isUnix()) {
+                        sh 'java -version'
+                        sh 'mvn -version'
+                        sh 'mvn clean compile test package -DskipTests=false'
+                    } else {
+                        bat 'java -version'
+                        bat 'mvn -version'
+                        bat 'mvn clean compile test package -DskipTests=false'
+                    }
+                }
+                echo '构建完成'
+            }
+        }
+        
+        stage('验证') {
+            steps {
+                echo '=== 验证构建产物 ==='
+                script {
+                    if (isUnix()) {
+                        sh 'ls -la target/'
+                        sh 'test -f target/jenkins-test-1.0.0.jar && echo "JAR文件生成成功" || echo "JAR文件生成失败"'
+                    } else {
+                        bat 'dir target\\'
+                        bat 'if exist target\\jenkins-test-1.0.0.jar (echo JAR文件生成成功) else (echo JAR文件生成失败)'
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '=== 构建流程完成 ==='
+        }
+        success {
+            echo '✅ 构建成功！'
+        }
+        failure {
+            echo '❌ 构建失败'
+        }
+    }
+}

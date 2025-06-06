@@ -41,19 +41,40 @@ mvn clean package
 
 ## Jenkins配置
 
-项目包含两个Jenkins配置文件：
+项目包含四个Jenkins配置文件，按推荐顺序：
 
-### 1. Jenkinsfile（推荐）
-标准的Jenkins流水线，包含完整的CI/CD流程：
-- 代码检出
-- 环境检查
-- 编译
-- 测试
-- 打包
-- 部署测试
+### 1. Jenkinsfile.minimal（最推荐）
+- 最简化版本，避免所有兼容性问题
+- 只包含基础的构建、测试、验证功能
+- 适合快速验证Jenkins环境
 
-### 2. Jenkinsfile.simple（备用）
-简化版本，使用Maven Wrapper，不依赖Jenkins工具配置。
+### 2. Jenkinsfile（推荐）
+- 标准版本，包含完整的CI/CD流程
+- 使用`junit`而不是`publishTestResults`
+- 包含测试结果发布和构建产物归档
+
+### 3. Jenkinsfile.simple（备用）
+- 简化版本，使用Maven Wrapper
+- 兼容性较好
+
+### 4. Jenkinsfile.docker（高级）
+- Docker容器环境下构建
+- 完全隔离的构建环境
+
+### 常见问题解决
+
+**问题1：`publishTestResults`方法不存在**
+- 解决方案：使用`junit`方法替代
+- 已在所有Jenkinsfile中修复
+
+**问题2：curl命令不可用**
+- 解决方案：添加curl存在性检查
+- 如果没有curl则跳过健康检查
+
+**建议使用顺序：**
+1. 首先尝试`Jenkinsfile.minimal`
+2. 如果成功，再尝试`Jenkinsfile`
+3. 如果有问题，使用`Jenkinsfile.simple`
 
 ### Jenkins环境要求
 

@@ -20,13 +20,14 @@ pipeline {
                         bat '.\\mvnw.cmd clean test package -DskipTests'
                     }
                 }
-            }
-            post {
+            }            post {
                 always {
                     // 尝试发布测试结果，如果没有则跳过
                     script {
-                        if (fileExists('target/surefire-reports/*.xml')) {
-                            publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                        if (fileExists('target/surefire-reports/TEST-*.xml')) {
+                            junit 'target/surefire-reports/TEST-*.xml'
+                        } else {
+                            echo '未找到测试结果文件'
                         }
                     }
                 }
@@ -35,6 +36,8 @@ pipeline {
                     script {
                         if (fileExists('target/*.jar')) {
                             archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                        } else {
+                            echo '未找到JAR文件'
                         }
                     }
                 }
