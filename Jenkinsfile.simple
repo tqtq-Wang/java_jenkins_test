@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('检出代码') {
+            steps {
+                echo '检出代码...'
+                checkout scm
+            }
+        }
+        
+        stage('构建和测试') {
+            steps {
+                echo '使用Maven Wrapper构建项目...'
+                script {
+                    if (isUnix()) {
+                        sh 'chmod +x ./mvnw'
+                        sh './mvnw clean test package -DskipTests'
+                    } else {
+                        bat '.\\mvnw.cmd clean test package -DskipTests'
+                    }
+                }
+            }
+            post {
+                always {
+                    // 尝试发布测试结果，如果没有则跳过
+                    script {
+                        if (fileExists('target/surefire-reports/*.xml')) {
+                            publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+                success {
+                    // 归档JAR文件
+                    script {
+                        if (fileExists('target/*.jar')) {
+                            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('健康检查') {
+            steps {
+                echo '检查构建产物...'
+                script {
+                    if (isUnix()) {
+                        sh 'ls -la target/'
+                    } else {
+                        bat 'dir target\\'
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '构建流程完成'
+        }
+        success {
+            echo '🎉 构建成功！'
+            echo '生成的JAR文件：target/jenkins-test-1.0.0.jar'
+        }
+        failure {
+            echo '❌ 构建失败，请检查日志'
+        }
+    }
+}

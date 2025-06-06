@@ -18,6 +18,7 @@ Thumbs.db
 
 # 日志文件
 *.log
+app.log
 
 # 临时文件
 *.tmp
@@ -25,3 +26,6 @@ Thumbs.db
 
 # Spring Boot
 spring-boot-*.log
+
+# Docker
+.dockerignore

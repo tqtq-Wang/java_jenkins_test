@@ -41,17 +41,50 @@ mvn clean package
 
 ## Jenkins配置
 
-项目包含 `Jenkinsfile`，定义了完整的CI/CD流水线：
+项目包含两个Jenkins配置文件：
+
+### 1. Jenkinsfile（推荐）
+标准的Jenkins流水线，包含完整的CI/CD流程：
 - 代码检出
+- 环境检查
 - 编译
 - 测试
 - 打包
-- 部署
+- 部署测试
 
-### Jenkins配置要求
+### 2. Jenkinsfile.simple（备用）
+简化版本，使用Maven Wrapper，不依赖Jenkins工具配置。
 
-在Jenkins中需要配置：
-- Maven 3.8.1 (工具名称: Maven-3.8.1)
-- JDK 17 (工具名称: JDK-17)
+### Jenkins环境要求
 
-如果工具名称不同，请修改 `Jenkinsfile` 中的工具配置。
+**选项1：使用系统环境**
+- 确保Jenkins服务器上安装了Java 17+
+- 确保Jenkins服务器上安装了Maven 3.6+
+- 确保java和mvn命令在PATH中可用
+
+**选项2：配置Jenkins工具管理**
+1. 进入Jenkins -> 系统管理 -> 全局工具配置
+2. 配置JDK：
+   - 名称：可以是任意名称（如"JDK-17"）
+   - JAVA_HOME路径：指向Java安装目录
+3. 配置Maven：
+   - 名称：可以是任意名称（如"Maven-3.8.1"）
+   - MAVEN_HOME路径：指向Maven安装目录
+
+**选项3：使用Docker**
+```dockerfile
+FROM openjdk:17-jdk-slim
+RUN apt-get update && apt-get install -y maven
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
+CMD ["java", "-jar", "target/jenkins-test-1.0.0.jar"]
+```
+
+### 故障排除
+
+如果遇到工具配置错误：
+1. 检查Jenkins全局工具配置中的工具名称
+2. 更新Jenkinsfile中的工具名称以匹配配置
+3. 或者使用Jenkinsfile.simple（不依赖工具配置）
+4. 确保Jenkins有权限访问Git仓库

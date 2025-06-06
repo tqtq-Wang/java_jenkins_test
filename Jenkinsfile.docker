@@ -1,0 +1,74 @@
+pipeline {
+    agent {
+        docker {
+            image 'openjdk:17-jdk-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    
+    stages {
+        stage('准备环境') {
+            steps {
+                echo '安装Maven...'
+                sh '''
+                    apt-get update
+                    apt-get install -y maven curl
+                '''
+            }
+        }
+        
+        stage('检出代码') {
+            steps {
+                echo '检出代码...'
+                checkout scm
+            }
+        }
+        
+        stage('编译和测试') {
+            steps {
+                echo '编译和测试项目...'
+                sh '''
+                    mvn clean compile
+                    mvn test
+                    mvn package -DskipTests
+                '''
+            }
+            post {
+                always {
+                    publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                }
+                success {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+        
+        stage('健康检查') {
+            steps {
+                echo '验证构建产物...'
+                sh '''
+                    ls -la target/
+                    echo "启动应用进行健康检查..."
+                    java -jar target/jenkins-test-1.0.0.jar --server.port=8081 &
+                    APP_PID=$!
+                    sleep 15
+                    curl -f http://localhost:8081/health || exit 1
+                    kill $APP_PID
+                    echo "健康检查通过！"
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '清理环境...'
+        }
+        success {
+            echo '🎉 Docker环境下构建成功！'
+        }
+        failure {
+            echo '❌ Docker环境下构建失败'
+        }
+    }
+}
